@@ -1,6 +1,7 @@
 import {GameFacade} from "@/GameFacade";
 import {log} from "@/utils/logger";
 import {inputSystem} from "@/systems/InputSystem";
+import {renderSystem} from "@/systems/RenderSystem";
 
 // Create canvas elements dynamically and append to document body.
 const canvasBg = document.createElement("canvas");
@@ -33,8 +34,8 @@ const facade = new GameFacade(canvasBg, canvasFg);
 
 // Register systems
 facade.addSystem(inputSystem);
+facade.addSystem(renderSystem);
 // facade.addSystem(new PhysicsSystem());
-// facade.addSystem(new RenderSystem());
 
 facade.start();
 
