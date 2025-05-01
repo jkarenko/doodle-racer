@@ -11,11 +11,14 @@ import type {System} from "@/systems/System";
 import type {GameContext} from "@/types/context";
 import type {RenderBody, Stroke} from "@/types/models";
 import {COLORS} from "@/constants";
+import {generateTerrain, terrainToBody} from "@/utils/terrain";
+import type {Vec2} from "@/types/models";
 
 export class PhysicsSystem implements System {
   private ctx!: GameContext;
   private bodies: RenderBody[] = [];
   private avatar?: Matter.Body;
+  private terrainVerts: Vec2[] = [];
 
   init(ctx: GameContext): void {
     this.ctx = ctx;
@@ -29,12 +32,9 @@ export class PhysicsSystem implements System {
     const {world} = this.ctx;
     Matter.World.clear(world, false);
 
-    // Flat ground
-    const ground = Bodies.rectangle(400, 600, 1600, 40, {
-      isStatic: true,
-      restitution: 0.1,
-      friction: 0.6,
-    });
+    // Procedural terrain based on fixed seed for now (will use URL seed later)
+    this.terrainVerts = generateTerrain(0xdeadbeef);
+    const ground = terrainToBody(this.terrainVerts);
     Matter.World.add(world, ground);
     this.bodies = [{body: ground, color: COLORS.ground}];
 
@@ -69,6 +69,10 @@ export class PhysicsSystem implements System {
 
   public getRenderBodies(): readonly RenderBody[] {
     return this.bodies;
+  }
+
+  public getTerrain(): readonly Vec2[] {
+    return this.terrainVerts;
   }
 }
 

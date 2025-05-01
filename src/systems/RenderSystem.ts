@@ -13,17 +13,21 @@ import {physicsSystem} from "@/systems/PhysicsSystem";
 
 export class RenderSystem implements System {
   private ctxFg!: CanvasRenderingContext2D;
+  private ctxBg!: CanvasRenderingContext2D;
   private dpr = window.devicePixelRatio || 1;
   private width = 0;
   private height = 0;
 
   init(ctx: GameContext): void {
     this.ctxFg = ctx.canvasFg.getContext("2d") as CanvasRenderingContext2D;
+    this.ctxBg = ctx.canvasBg.getContext("2d") as CanvasRenderingContext2D;
     this.resize(ctx);
     window.addEventListener("resize", () => this.resize(ctx));
   }
 
   update(): void {
+    this.clearBg();
+    this.drawTerrain();
     this.clear();
     this.drawStrokes();
     this.drawBodies();
@@ -46,6 +50,10 @@ export class RenderSystem implements System {
 
   private clear(): void {
     this.ctxFg.clearRect(0, 0, this.width, this.height);
+  }
+
+  private clearBg(): void {
+    this.ctxBg.clearRect(0, 0, this.width, this.height);
   }
 
   private drawStrokes(): void {
@@ -86,6 +94,19 @@ export class RenderSystem implements System {
         this.ctxFg.stroke();
       }
     }
+  }
+
+  private drawTerrain(): void {
+    const verts = physicsSystem.getTerrain();
+    if (verts.length === 0) return;
+    this.ctxBg.strokeStyle = COLORS.ground;
+    this.ctxBg.lineWidth = 2;
+    this.ctxBg.beginPath();
+    this.ctxBg.moveTo(verts[0].x, verts[0].y);
+    for (let i = 1; i < verts.length; i++) {
+      this.ctxBg.lineTo(verts[i].x, verts[i].y);
+    }
+    this.ctxBg.stroke();
   }
 
   private colorForKey(key: string): string {
