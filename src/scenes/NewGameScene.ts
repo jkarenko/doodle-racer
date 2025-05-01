@@ -51,7 +51,16 @@ export class NewGameScene implements SceneModule {
     this.toolbar.appendChild(this.btn("Undo", () => inputSystem.undo()));
     this.toolbar.appendChild(this.btn("Redo", () => inputSystem.redo()));
     this.toolbar.appendChild(this.btn("Clear", () => inputSystem.clear()));
-    this.toolbar.appendChild(this.btn("Done", () => this.change(SceneId.GAME)));
+    this.toolbar.appendChild(
+      this.btn("Done", async () => {
+        const name = prompt("Name this doodle?", "My Doodle")?.trim();
+        if (name) {
+          const {saveDoodle} = await import("@/utils/persistence");
+          saveDoodle(name, inputSystem.getStrokes() as any);
+        }
+        this.change(SceneId.GAME);
+      })
+    );
     this.toolbar.appendChild(this.btn("Back", () => this.change(SceneId.MAIN_MENU)));
 
     this.container.appendChild(this.toolbar);
