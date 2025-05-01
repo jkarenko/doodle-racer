@@ -46,4 +46,5 @@ export const COLLISION = {
 export const GAME = {
   timerSeconds: 60,
   undoLimit: 50,
+  finishLineX: 4000, // World x-coordinate for the finish line
 };

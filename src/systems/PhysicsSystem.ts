@@ -10,7 +10,7 @@ import Matter from "matter-js";
 import type {System} from "@/systems/System";
 import type {GameContext} from "@/types/context";
 import type {RenderBody, Stroke} from "@/types/models";
-import {COLORS, PHYSICS} from "@/constants";
+import {COLORS, PHYSICS, GAME, COLLISION} from "@/constants";
 import {generateTerrain, terrainToBody} from "@/utils/terrain";
 import type {Vec2} from "@/types/models";
 import {strokesToAvatar} from "@/utils/doodle";
@@ -95,8 +95,8 @@ export class PhysicsSystem implements System {
   }
 
   /** Check if avatar x-position surpassed finishX (default 1400). */
-  public hasFinished(finishX = 1400): boolean {
-    return this.avatar ? this.avatar.position.x >= finishX : false;
+  public hasFinished(): boolean {
+    return this.avatar ? this.avatar.position.x >= GAME.finishLineX : false;
   }
 
   /** Simple defeat: avatar fell below world bounds. */

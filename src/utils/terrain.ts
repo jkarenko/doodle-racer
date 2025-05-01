@@ -8,7 +8,7 @@
 import {Vec2} from "@/types/models";
 import {PRNG} from "@/utils/seed";
 import Matter from "matter-js";
-import {COLLISION} from "@/constants";
+import {COLLISION, GAME} from "@/constants";
 
 export interface TerrainOpts {
   length: number; // total width in px
@@ -19,8 +19,8 @@ export interface TerrainOpts {
 
 /** Default terrain parameters matching README spec. */
 const DEFAULT_OPTS: TerrainOpts = {
-  length: 1600,
-  step: 20,
+  length: GAME.finishLineX,
+  step: 200,
   maxSlopeDeg: 20,
   maxHeight: 200,
 };

@@ -31,7 +31,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
   const bodyStroke = strokes.find((s) => s.color === "black");
   if (!bodyStroke || bodyStroke.pts.length < 3) {
     const cube = Matter.Bodies.rectangle(0, 0, 60, 60, {label: "body"});
-    Matter.Composite.add(composite, cube);
+    // Matter.Composite.add(composite, cube);
     return {composite, main: cube, wheels: [], legs: []};
   }
 

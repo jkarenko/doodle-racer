@@ -8,7 +8,7 @@
 import type {System} from "@/systems/System";
 import type {GameContext} from "@/types/context";
 import {inputSystem} from "@/systems/InputSystem";
-import {COLORS} from "@/constants";
+import {COLORS, GAME} from "@/constants";
 import {physicsSystem} from "@/systems/PhysicsSystem";
 import {PRNG} from "@/utils/seed";
 import type {Vec2} from "@/types/models";
@@ -42,6 +42,7 @@ export class RenderSystem implements System {
     this.drawSky();
     this.drawClouds();
     this.drawTerrain();
+    this.drawFinishLine();
     this.clear();
     this.drawStrokes();
     this.drawBodies();
@@ -175,6 +176,22 @@ export class RenderSystem implements System {
     // Assuming generateTerrain creates a closed polygon (top surface + vertical sides + bottom)
     this.ctxBg.closePath();
     this.ctxBg.fill();
+  }
+
+  private drawFinishLine(): void {
+    const finishX = GAME.finishLineX;
+    const squareSize = 20;
+    const flagWidth = squareSize * 2; // Make the flag 2 squares wide
+    const flagHeight = this.height; // Span full canvas height
+
+    for (let y = 0; y < flagHeight; y += squareSize) {
+      for (let xOffset = 0; xOffset < flagWidth; xOffset += squareSize) {
+        const row = Math.floor(y / squareSize);
+        const col = Math.floor(xOffset / squareSize);
+        this.ctxBg.fillStyle = (row + col) % 2 === 0 ? "#ffffff" : "#000000";
+        this.ctxBg.fillRect(finishX + xOffset, y, squareSize, squareSize);
+      }
+    }
   }
 
   private colorForKey(key: string): string {
