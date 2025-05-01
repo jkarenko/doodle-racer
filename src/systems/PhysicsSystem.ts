@@ -13,6 +13,7 @@ import type {RenderBody, Stroke} from "@/types/models";
 import {COLORS} from "@/constants";
 import {generateTerrain, terrainToBody} from "@/utils/terrain";
 import type {Vec2} from "@/types/models";
+import {strokesToAvatar} from "@/utils/doodle";
 
 export class PhysicsSystem implements System {
   private ctx!: GameContext;
@@ -38,14 +39,19 @@ export class PhysicsSystem implements System {
     Matter.World.add(world, ground);
     this.bodies = [{body: ground, color: COLORS.ground}];
 
-    // Placeholder avatar cube
-    const avatar = Bodies.rectangle(200, 200, 60, 60, {
-      friction: 0.6,
-      restitution: 0.2,
+    // Convert strokes into avatar composite positioned near start
+    const {composite, main} = strokesToAvatar(strokes);
+    Matter.Composite.translate(composite, {x: 200, y: 200});
+    Matter.World.addComposite(world, composite);
+
+    this.avatar = main;
+
+    // Collect bodies for rendering
+    this.bodies.push({body: main, color: COLORS.body});
+    composite.bodies.forEach((b) => {
+      if (b === main) return;
+      this.bodies.push({body: b, color: b.label === "wheel" ? COLORS.wheel : COLORS.leg});
     });
-    Matter.World.add(world, avatar);
-    this.bodies.push({body: avatar, color: COLORS.body});
-    this.avatar = avatar;
   }
 
   update(): void {

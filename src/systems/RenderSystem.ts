@@ -28,9 +28,9 @@ export class RenderSystem implements System {
 
   update(): void {
     // Camera follow avatar (smooth)
-    const avatar = physicsSystem.getRenderBodies().find((b) => b.body === (physicsSystem as any).avatar)?.body;
-    if (avatar) {
-      const target = Math.max(0, avatar.position.x - this.width * 0.33);
+    const avatarBody = (physicsSystem as any).avatar as Matter.Body | undefined;
+    if (avatarBody) {
+      const target = Math.max(0, avatarBody.position.x - this.width * 0.33);
       this.cameraX += (target - this.cameraX) * 0.1;
     }
 
