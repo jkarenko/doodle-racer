@@ -45,7 +45,8 @@ export class RenderSystem implements System {
     this.drawFinishLine();
     this.clear();
     this.drawStrokes();
-    this.drawBodies();
+    this.drawAvatarVisuals();
+    this.drawOtherBodies();
   }
 
   /** Resets the camera's horizontal position to the start. */
@@ -122,36 +123,98 @@ export class RenderSystem implements System {
     }
   }
 
-  private drawBodies(): void {
-    const bodies = physicsSystem.getRenderBodies();
+  private drawAvatarVisuals(): void {
+    const avatarVisuals = physicsSystem.getAvatarVisuals();
+    if (!avatarVisuals) return;
+
+    const {mainBody, visualBodyStroke, wheels, legs} = avatarVisuals;
+
+    // --- Draw Main Body Visual ---
+    if (visualBodyStroke && visualBodyStroke.pts.length >= 2) {
+      this.drawStrokeRelativeToBody(mainBody, visualBodyStroke);
+    }
+
+    // --- Draw Wheel Visuals ---
+    for (const wheelPart of wheels) {
+      if (wheelPart.visual && wheelPart.visual.pts.length >= 2) {
+        this.drawStrokeRelativeToBody(wheelPart.physics, wheelPart.visual);
+      }
+    }
+
+    // --- Draw Leg Visuals ---
+    for (const legPart of legs) {
+      if (legPart.visual && legPart.visual.pts.length >= 2) {
+        this.drawStrokeRelativeToBody(legPart.physics, legPart.visual);
+      }
+    }
+  }
+
+  /** Helper function to draw a stroke relative to a physics body's transform */
+  private drawStrokeRelativeToBody(body: Matter.Body, stroke: Stroke): void {
+    const {position, angle} = body;
+    const strokeColor = this.colorForKey(stroke.color);
+
+    this.ctxFg.save();
+    this.ctxFg.translate(position.x, position.y);
+    this.ctxFg.rotate(angle);
+
+    // Calculate centroid of the original stroke
+    const centroidX = stroke.pts.reduce((sum, p) => sum + p.x, 0) / stroke.pts.length;
+    const centroidY = stroke.pts.reduce((sum, p) => sum + p.y, 0) / stroke.pts.length;
+
+    // --- Offset Calculation ---
+    // The physics body's origin (body.position) might not align perfectly
+    // with the visual stroke's intended center (centroidX, centroidY) in the original drawing.
+    // We need to find the offset between the physics body's creation position
+    // and the stroke's centroid *in the original coordinate space* where strokesToAvatar defined them.
+
+    // Assumption: strokesToAvatar creates physics bodies (main, wheels, legs)
+    // at the centroid calculated from their respective stroke points (or hull for main).
+    // body.position is the current world position, but we need the original offset.
+    // This offset calculation might need refinement depending on how strokesToAvatar places bodies.
+    // Let's assume for now the physics body IS created at the stroke centroid
+    // (or hull centroid for main body).
+
+    // The stroke points are originally relative to the canvas origin (0,0).
+    // The body transform moves the canvas origin to body.position.
+    // We want to draw the stroke points relative to the stroke's own centroid.
+    const offsetX = 0; // Initially assume physics body origin = stroke centroid
+    const offsetY = 0;
+
+    // Draw stroke points relative to the stroke's centroid
+    this.ctxFg.strokeStyle = strokeColor;
+    this.ctxFg.lineWidth = 4; // Make strokes a bit thicker
+    this.ctxFg.beginPath();
+
+    const firstPt = stroke.pts[0];
+    this.ctxFg.moveTo(firstPt.x - centroidX + offsetX, firstPt.y - centroidY + offsetY);
+    for (let i = 1; i < stroke.pts.length; i++) {
+      const pt = stroke.pts[i];
+      this.ctxFg.lineTo(pt.x - centroidX + offsetX, pt.y - centroidY + offsetY);
+    }
+    this.ctxFg.stroke();
+
+    this.ctxFg.restore();
+  }
+
+  private drawOtherBodies(): void {
+    // Example: Draw non-avatar bodies (like the ground outline for debug)
+    const bodies = physicsSystem.getRenderBodies(); // If you still need this list
     for (const rb of bodies) {
       const {body, color} = rb;
-
+      // Skip avatar parts if they are still in `getRenderBodies`
+      if (body.label === "body" || body.label === "wheel" || body.label === "leg") {
+        continue;
+      }
       // Skip rendering the ground body outline, as it's filled on the background canvas.
       if (body.label === "ground") {
         continue;
       }
 
-      this.ctxFg.strokeStyle = color;
-      this.ctxFg.lineWidth = 2;
-
-      if (body.circleRadius) {
-        this.ctxFg.beginPath();
-        this.ctxFg.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
-        this.ctxFg.stroke();
-
-        if (body.label === "wheel") {
-          // Spin accent line
-          const angle = body.angle;
-          const r = body.circleRadius;
-          const endX = body.position.x + Math.cos(angle) * r;
-          const endY = body.position.y + Math.sin(angle) * r;
-          this.ctxFg.beginPath();
-          this.ctxFg.moveTo(body.position.x, body.position.y);
-          this.ctxFg.lineTo(endX, endY);
-          this.ctxFg.stroke();
-        }
-      } else {
+      // Draw other bodies (example: simple rectangle outline)
+      if (!body.circleRadius) {
+        this.ctxFg.strokeStyle = color || "#888"; // Fallback color
+        this.ctxFg.lineWidth = 1;
         const verts = body.vertices;
         this.ctxFg.beginPath();
         this.ctxFg.moveTo(verts[0].x, verts[0].y);
@@ -161,6 +224,7 @@ export class RenderSystem implements System {
         this.ctxFg.closePath();
         this.ctxFg.stroke();
       }
+      // Add circle drawing if needed for other bodies
     }
   }
 

@@ -9,9 +9,13 @@ import {COLLISION} from "@/constants";
 
 interface AvatarParts {
   composite: Matter.Composite;
-  main: Matter.Body;
-  wheels: Matter.Body[];
-  legs: Matter.Body[];
+  main: Matter.Body; // Invisible physics body (hull)
+  wheels: Matter.Body[]; // Invisible physics wheels
+  legs: Matter.Body[]; // Invisible physics legs
+  // Separate visual strokes
+  visualBodyStroke: Stroke | null;
+  visualWheelStrokes: Stroke[];
+  visualLegStrokes: Stroke[];
 }
 
 /** Convert strokes to an avatar composite. Falls back to cube if invalid. */
@@ -29,10 +33,22 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
   const composite = Matter.Composite.create({label: "avatar"});
 
   const bodyStroke = strokes.find((s) => s.color === "black");
+  const wheelStrokes = strokes.filter((s) => s.color === "red");
+  const legStrokes = strokes.filter((s) => s.color === "yellow");
+
   if (!bodyStroke || bodyStroke.pts.length < 3) {
     const cube = Matter.Bodies.rectangle(0, 0, 60, 60, {label: "body"});
-    // Matter.Composite.add(composite, cube);
-    return {composite, main: cube, wheels: [], legs: []};
+    // Keep fallback cube visible, return empty visual strokes
+    // Return null/empty arrays for visual strokes
+    return {
+      composite,
+      main: cube,
+      wheels: [],
+      legs: [],
+      visualBodyStroke: null,
+      visualWheelStrokes: [],
+      visualLegStrokes: [],
+    };
   }
 
   // Build body polygon using convex hull of stroke points
@@ -46,6 +62,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     label: "body",
     friction: 0.8,
     collisionFilter: avatarFilter,
+    render: {visible: false},
   };
   try {
     const centroid = Matter.Vertices.centre(hull);
@@ -80,8 +97,8 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
   }
 
   // Wheels (red strokes) – circle at centroid
-  const wheelStrokes = strokes.filter((s) => s.color === "red");
   const wheels: Matter.Body[] = [];
+  const validWheelStrokes: Stroke[] = []; // Store corresponding valid strokes
   for (const ws of wheelStrokes) {
     if (ws.pts.length < 3) continue;
     const cx = ws.pts.reduce((sum, p) => sum + p.x, 0) / ws.pts.length;
@@ -94,9 +111,12 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
       label: "wheel",
       friction: 0.8,
       collisionFilter: avatarFilter,
+      // Keep wheels visible by default
+      render: {visible: false}, // Make wheels invisible
     });
     Matter.Composite.add(composite, wheel);
     wheels.push(wheel);
+    validWheelStrokes.push(ws); // Add the corresponding stroke
     // Constraint
     const constraint = Matter.Constraint.create({
       bodyA: body,
@@ -113,7 +133,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
 
   // Legs (yellow strokes) – capsule/rectangle with revolute joint to body
   const legs: Matter.Body[] = [];
-  const legStrokes = strokes.filter((s) => s.color === "yellow");
+  const validLegStrokes: Stroke[] = []; // Store corresponding valid strokes
   for (const ls of legStrokes) {
     if (ls.pts.length < 2) continue;
     // Use first and last point as endpoints
@@ -137,6 +157,8 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
       restitution: 0, // No bounce
       collisionFilter: avatarFilter,
       chamfer: {radius: 2}, // Beveled edges to reduce snagging
+      // Keep legs visible by default
+      render: {visible: false}, // Make legs invisible
     });
     // Rotate to match stroke direction
     Matter.Body.setAngle(leg, Math.atan2(dy, dx));
@@ -145,6 +167,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     // Set leg mass relative to main body mass to keep CoM stable
     Matter.Body.setMass(leg, body.mass * 0.1);
     legs.push(leg);
+    validLegStrokes.push(ls); // Add the corresponding stroke
 
     // Revolute joint at proximal end (p0)
     const constraint = Matter.Constraint.create({
@@ -162,5 +185,14 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     Matter.Composite.add(composite, constraint);
   }
 
-  return {composite, main: body, wheels, legs};
+  // Return physics bodies and separated visual strokes
+  return {
+    composite,
+    main: body,
+    wheels,
+    legs,
+    visualBodyStroke: bodyStroke,
+    visualWheelStrokes: validWheelStrokes,
+    visualLegStrokes: validLegStrokes,
+  };
 }
