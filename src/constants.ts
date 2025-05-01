@@ -13,6 +13,15 @@ export const COLORS = {
   skyEnd: "#b9e5ff", // Sky gradient end
 } as const;
 
+export const COLORS_COLORBLIND = {
+  body: "#000000",
+  wheel: "#1e88e5", // blue
+  leg: "#ff9800", // orange
+  ground: "#4caf50",
+  skyStart: "#87ceeb",
+  skyEnd: "#b9e5ff",
+} as const;
+
 export const PHYSICS = {
   gravity: 9.8, // m/s^2
   slopeFriction: 0.6,

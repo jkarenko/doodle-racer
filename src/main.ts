@@ -3,6 +3,7 @@ import {log} from "@/utils/logger";
 import {inputSystem} from "@/systems/InputSystem";
 import {renderSystem} from "@/systems/RenderSystem";
 import {physicsSystem} from "@/systems/PhysicsSystem";
+import {applyPalette} from "@/utils/theme";
 
 // Create canvas elements dynamically and append to document body.
 const canvasBg = document.createElement("canvas");
@@ -38,6 +39,8 @@ facade.addSystem(inputSystem);
 facade.addSystem(renderSystem);
 facade.addSystem(physicsSystem);
 // facade.addSystem(new PhysicsSystem());
+
+applyPalette("default");
 
 facade.start();
 

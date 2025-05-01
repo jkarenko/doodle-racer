@@ -118,7 +118,8 @@ export class RenderSystem implements System {
   private drawTerrain(): void {
     const verts = physicsSystem.getTerrain();
     if (verts.length === 0) return;
-    this.ctxBg.strokeStyle = COLORS.ground;
+    this.ctxBg.strokeStyle =
+      getComputedStyle(document.documentElement).getPropertyValue("--ground-color") || COLORS.ground;
     this.ctxBg.lineWidth = 2;
     this.ctxBg.beginPath();
     this.ctxBg.moveTo(verts[0].x, verts[0].y);
@@ -131,11 +132,11 @@ export class RenderSystem implements System {
   private colorForKey(key: string): string {
     switch (key) {
       case "red":
-        return COLORS.wheel;
+        return getComputedStyle(document.documentElement).getPropertyValue("--wheel-color") || COLORS.wheel;
       case "yellow":
-        return COLORS.leg;
+        return getComputedStyle(document.documentElement).getPropertyValue("--leg-color") || COLORS.leg;
       default:
-        return COLORS.body;
+        return getComputedStyle(document.documentElement).getPropertyValue("--body-color") || COLORS.body;
     }
   }
 }

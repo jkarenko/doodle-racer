@@ -56,6 +56,13 @@ export class MainMenuScene implements SceneModule {
     });
     this.container.appendChild(setSeedBtn);
 
+    const paletteBtn = this.button("Toggle Palette", () => {
+      const next = this.ctx.settings.palette === "default" ? "colorblind" : "default";
+      this.ctx.settings.palette = next;
+      import("@/utils/theme").then(({applyPalette}) => applyPalette(next));
+    });
+    this.container.appendChild(paletteBtn);
+
     root.appendChild(this.container);
   }
 
