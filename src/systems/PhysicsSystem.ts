@@ -15,6 +15,7 @@ import {COLORS} from "@/constants";
 export class PhysicsSystem implements System {
   private ctx!: GameContext;
   private bodies: RenderBody[] = [];
+  private avatar?: Matter.Body;
 
   init(ctx: GameContext): void {
     this.ctx = ctx;
@@ -44,6 +45,7 @@ export class PhysicsSystem implements System {
     });
     Matter.World.add(world, avatar);
     this.bodies.push({body: avatar, color: COLORS.body});
+    this.avatar = avatar;
   }
 
   update(): void {
@@ -53,6 +55,16 @@ export class PhysicsSystem implements System {
   dispose(): void {
     Matter.World.clear(this.ctx.world, false);
     this.bodies = [];
+  }
+
+  /** Check if avatar x-position surpassed finishX (default 1400). */
+  public hasFinished(finishX = 1400): boolean {
+    return this.avatar ? this.avatar.position.x >= finishX : false;
+  }
+
+  /** Simple defeat: avatar fell below world bounds. */
+  public hasFallen(fallY = 800): boolean {
+    return this.avatar ? this.avatar.position.y > fallY : false;
   }
 
   public getRenderBodies(): readonly RenderBody[] {

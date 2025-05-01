@@ -66,6 +66,16 @@ export class GameScene implements SceneModule {
     const remaining = Math.max(0, GAME.timerSeconds - elapsed);
     this.timerEl.textContent = remaining.toFixed(1);
 
+    if (physicsSystem.hasFinished()) {
+      this.finish(true);
+      return;
+    }
+
+    if (physicsSystem.hasFallen()) {
+      this.finish(false);
+      return;
+    }
+
     if (remaining <= 0) {
       this.finish(false);
       return;
