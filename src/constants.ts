@@ -30,6 +30,16 @@ export const PHYSICS = {
   stuckDuration: 4_000, // ms
   maxWheels: 10,
   maxLegs: 10,
+  wheelMaxRpm: 2, // Target rotations per minute
+  get wheelMaxAngularVelocity(): number {
+    return (this.wheelMaxRpm * 2 * Math.PI) / 60;
+  },
+} as const;
+
+export const COLLISION = {
+  DEFAULT: 0x0001,
+  GROUND: 0x0002,
+  // Add more categories if needed (e.g., sensors, projectiles)
 } as const;
 
 export const GAME = {

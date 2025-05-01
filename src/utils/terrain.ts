@@ -8,6 +8,7 @@
 import {Vec2} from "@/types/models";
 import {PRNG} from "@/utils/seed";
 import Matter from "matter-js";
+import {COLLISION} from "@/constants";
 
 export interface TerrainOpts {
   length: number; // total width in px
@@ -47,8 +48,37 @@ export function generateTerrain(seed: number, baseY = 500, opts: Partial<Terrain
 }
 
 export function terrainToBody(vertices: Vec2[]): Matter.Body {
-  return Matter.Bodies.fromVertices(0, 0, [vertices.map((v) => ({x: v.x, y: v.y}))], {
+  // Convert polyline into a series of thin static rectangles (segments).
+  const parts: Matter.Body[] = [];
+  for (let i = 0; i < vertices.length - 1; i++) {
+    const a = vertices[i];
+    const b = vertices[i + 1];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const length = Math.hypot(dx, dy);
+    if (length === 0) continue;
+    const angle = Math.atan2(dy, dx);
+    const rect = Matter.Bodies.rectangle((a.x + b.x) / 2, (a.y + b.y) / 2, length, 4, {
+      isStatic: true,
+      friction: 0.8,
+      label: "ground-seg",
+      angle,
+      collisionFilter: {
+        category: COLLISION.GROUND,
+        mask: COLLISION.DEFAULT, // Only collide with default category objects
+      },
+    });
+    Matter.Body.setAngle(rect, angle);
+    parts.push(rect);
+  }
+  // Set collision filter for the compound ground body as well
+  return Matter.Body.create({
+    parts,
     isStatic: true,
-    friction: 0.8,
-  }) as Matter.Body;
+    label: "ground",
+    collisionFilter: {
+      category: COLLISION.GROUND,
+      mask: COLLISION.DEFAULT,
+    },
+  });
 }

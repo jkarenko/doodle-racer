@@ -5,6 +5,8 @@ import {renderSystem} from "@/systems/RenderSystem";
 import {physicsSystem} from "@/systems/PhysicsSystem";
 import {applyPalette} from "@/utils/theme";
 import {debugOverlaySystem} from "@/systems/DebugOverlaySystem";
+import Matter from "matter-js";
+import * as decomp from "poly-decomp-es";
 
 // Create canvas elements dynamically and append to document body.
 const canvasBg = document.createElement("canvas");
@@ -43,6 +45,13 @@ facade.addSystem(debugOverlaySystem);
 // facade.addSystem(new PhysicsSystem());
 
 applyPalette("default");
+
+// Register decomp library for concave polygon support in Matter.js
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore – setDecomp is not yet in type definitions.
+if ((Matter as any).Common && (Matter as any).Common.setDecomp) {
+  (Matter as any).Common.setDecomp(decomp);
+}
 
 facade.start();
 

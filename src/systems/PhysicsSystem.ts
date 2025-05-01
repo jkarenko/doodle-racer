@@ -43,16 +43,29 @@ export class PhysicsSystem implements System {
     // Convert strokes into avatar composite positioned near start
     const {composite, main, wheels} = strokesToAvatar(strokes);
     this.wheels = wheels;
-    Matter.Composite.translate(composite, {x: 200, y: 200});
+    // Spawn slightly above the starting terrain height (terrainVerts[0].y)
+    // Calculate approximate height of the avatar to avoid initial overlap
+    const bounds = Matter.Composite.bounds(composite);
+    const avatarHeight = bounds.max.y - bounds.min.y;
+    const startX = 150; // A bit away from the left edge
+    const startY = this.terrainVerts[0].y - avatarHeight / 2 - 20; // Spawn 20px above ground
+    console.log("[PhysicsSystem] Before translate:", {composite, mainPos: main.position});
+    Matter.Composite.translate(composite, {x: startX - main.position.x, y: startY - main.position.y});
+    console.log("[PhysicsSystem] After translate:", {composite, mainPos: main.position});
     Matter.World.addComposite(world, composite);
 
     this.avatar = main;
 
-    // Collect bodies for rendering
-    this.bodies.push({body: main, color: COLORS.body});
-    composite.bodies.forEach((b) => {
-      if (b === main) return;
-      const color = b.label === "wheel" ? COLORS.wheel : COLORS.leg;
+    // Collect all bodies from the composite for rendering.
+    // Clear previous bodies (except ground added earlier)
+    this.bodies = this.bodies.filter((rb) => rb.body.label === "ground");
+    Matter.Composite.allBodies(composite).forEach((b) => {
+      let color = COLORS.body; // Default to body color
+      if (b.label === "wheel") {
+        color = COLORS.wheel;
+      } else if (b.label === "leg") {
+        color = COLORS.leg;
+      }
       this.bodies.push({body: b, color});
     });
   }
@@ -60,8 +73,19 @@ export class PhysicsSystem implements System {
   update(): void {
     // Apply motor torque on wheels to propel the avatar.
     for (const w of this.wheels) {
-      // Simple constant torque each frame.
-      w.torque += w.mass * PHYSICS.gravity * PHYSICS.wheelTorqueFactor;
+      // Apply torque only if below target speed, else clamp velocity.
+      if (Math.abs(w.angularVelocity) < PHYSICS.wheelMaxAngularVelocity) {
+        // Apply torque to reach target speed.
+        const torque = w.mass * PHYSICS.gravity * PHYSICS.wheelTorqueFactor;
+        // Apply torque in direction opposite to spin if needed (breaking/reverse)
+        // For now just constant forward torque
+        w.torque += torque;
+      } else {
+        // Clamp angular velocity to max speed.
+        Matter.Body.setAngularVelocity(w, Math.sign(w.angularVelocity) * PHYSICS.wheelMaxAngularVelocity);
+        // Optional: Zero torque when at max speed to prevent wind-up?
+        w.torque = 0;
+      }
     }
   }
 
