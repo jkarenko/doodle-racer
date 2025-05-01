@@ -6,6 +6,8 @@ import {SceneManager} from "@/scenes/SceneManager";
 import {SceneId, type SceneModule} from "@/scenes/Scene";
 import {mainMenuScene} from "@/scenes/MainMenuScene";
 import {newGameScene} from "@/scenes/NewGameScene";
+import {gameScene} from "@/scenes/GameScene";
+import {createOverlayScene} from "@/scenes/OverlayScene";
 
 /**
  * GameFacade
@@ -54,6 +56,9 @@ export class GameFacade {
     const factory: Record<SceneId, () => SceneModule> = {
       [SceneId.MAIN_MENU]: mainMenuScene,
       [SceneId.NEW_GAME]: newGameScene,
+      [SceneId.GAME]: gameScene,
+      [SceneId.VICTORY]: createOverlayScene("Victory!", "Menu", SceneId.MAIN_MENU),
+      [SceneId.DEFEAT]: createOverlayScene("Try Again", "Menu", SceneId.MAIN_MENU),
     };
 
     const manager = new SceneManager(sceneRoot, this.ctx as any, factory);
