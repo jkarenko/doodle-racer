@@ -412,8 +412,8 @@ I'm ready to build! Switch to Agent mode and tell me to continue.
 - 🟢 Accessibility: ARIA labels, 44 px buttons, color-blind palette.
 
 ### Remaining for M2 polish
-- Performance audit & bundle-size guard (CI).
+- Performance profiling & micro-optimisations.
 
 ### Next Steps
-1. Set up GitHub Action workflow for `lint`, `test`, and bundle-size budget (< 200 kB gzip).
-2. Run performance profiling pass and optimize if necessary.
+1. Run performance profiling pass and optimize if necessary.
+2. Prepare final M2 demo build and tag release.
