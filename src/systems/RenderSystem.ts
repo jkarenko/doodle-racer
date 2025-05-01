@@ -9,6 +9,7 @@ import type {System} from "@/systems/System";
 import type {GameContext} from "@/types/context";
 import {inputSystem} from "@/systems/InputSystem";
 import {COLORS} from "@/constants";
+import {physicsSystem} from "@/systems/PhysicsSystem";
 
 export class RenderSystem implements System {
   private ctxFg!: CanvasRenderingContext2D;
@@ -25,6 +26,7 @@ export class RenderSystem implements System {
   update(): void {
     this.clear();
     this.drawStrokes();
+    this.drawBodies();
   }
 
   dispose(): void {
@@ -58,6 +60,31 @@ export class RenderSystem implements System {
         this.ctxFg.lineTo(s.pts[i].x, s.pts[i].y);
       }
       this.ctxFg.stroke();
+    }
+  }
+
+  private drawBodies(): void {
+    const bodies = physicsSystem.getRenderBodies();
+    for (const rb of bodies) {
+      // Draw rectangle/circle approximation for now
+      const {body, color} = rb;
+      this.ctxFg.strokeStyle = color;
+      this.ctxFg.lineWidth = 2;
+
+      if (body.circleRadius) {
+        this.ctxFg.beginPath();
+        this.ctxFg.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
+        this.ctxFg.stroke();
+      } else {
+        const verts = body.vertices;
+        this.ctxFg.beginPath();
+        this.ctxFg.moveTo(verts[0].x, verts[0].y);
+        for (let i = 1; i < verts.length; i++) {
+          this.ctxFg.lineTo(verts[i].x, verts[i].y);
+        }
+        this.ctxFg.closePath();
+        this.ctxFg.stroke();
+      }
     }
   }
 
