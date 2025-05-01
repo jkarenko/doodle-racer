@@ -25,6 +25,9 @@ export class GameFacade {
   constructor(canvasBg: HTMLCanvasElement, canvasFg: HTMLCanvasElement) {
     const engine = Matter.Engine.create({enableSleeping: false});
     engine.gravity.y = 1; // Realistic gravity scale set later via constants
+    // Increase solver iterations for better stability and penetration resistance
+    engine.positionIterations = 8;
+    engine.velocityIterations = 6;
 
     const hashSeed = window.location.hash.replace("#", "");
     const seedNum = hashSeed ? parseInt(hashSeed, 16) >>> 0 : 0xdeadbeef;

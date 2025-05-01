@@ -25,12 +25,12 @@ export const COLORS_COLORBLIND = {
 export const PHYSICS = {
   gravity: 9.8, // m/s^2
   slopeFriction: 0.6,
-  wheelTorqueFactor: 0.7, // torque = m * g * factor
+  wheelTorqueFactor: 0.01, // torque = m * g * factor
   stuckVelocityThreshold: 0.4, // m/s
   stuckDuration: 4_000, // ms
   maxWheels: 10,
   maxLegs: 10,
-  wheelMaxRpm: 2, // Target rotations per minute
+  wheelMaxRpm: 1, // Target rotations per minute
   get wheelMaxAngularVelocity(): number {
     return (this.wheelMaxRpm * 2 * Math.PI) / 60;
   },
@@ -39,7 +39,8 @@ export const PHYSICS = {
 export const COLLISION = {
   DEFAULT: 0x0001,
   GROUND: 0x0002,
-  // Add more categories if needed (e.g., sensors, projectiles)
+  AVATAR: 0x0004,
+  BOUNDARY: 0x0008, // For future walls/level boundaries
 } as const;
 
 export const GAME = {

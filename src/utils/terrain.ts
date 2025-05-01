@@ -58,14 +58,14 @@ export function terrainToBody(vertices: Vec2[]): Matter.Body {
     const length = Math.hypot(dx, dy);
     if (length === 0) continue;
     const angle = Math.atan2(dy, dx);
-    const rect = Matter.Bodies.rectangle((a.x + b.x) / 2, (a.y + b.y) / 2, length, 4, {
+    const rect = Matter.Bodies.rectangle((a.x + b.x) / 2, (a.y + b.y) / 2, length, 10, {
       isStatic: true,
       friction: 0.8,
       label: "ground-seg",
       angle,
       collisionFilter: {
         category: COLLISION.GROUND,
-        mask: COLLISION.DEFAULT, // Only collide with default category objects
+        mask: COLLISION.AVATAR, // Only collide with avatar category objects
       },
     });
     Matter.Body.setAngle(rect, angle);
@@ -78,7 +78,7 @@ export function terrainToBody(vertices: Vec2[]): Matter.Body {
     label: "ground",
     collisionFilter: {
       category: COLLISION.GROUND,
-      mask: COLLISION.DEFAULT,
+      mask: COLLISION.AVATAR,
     },
   });
 }

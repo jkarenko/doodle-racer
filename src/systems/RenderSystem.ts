@@ -119,8 +119,13 @@ export class RenderSystem implements System {
   private drawBodies(): void {
     const bodies = physicsSystem.getRenderBodies();
     for (const rb of bodies) {
-      // Draw rectangle/circle approximation for now
       const {body, color} = rb;
+
+      // Skip rendering the ground body outline, as it's filled on the background canvas.
+      if (body.label === "ground") {
+        continue;
+      }
+
       this.ctxFg.strokeStyle = color;
       this.ctxFg.lineWidth = 2;
 
@@ -155,16 +160,21 @@ export class RenderSystem implements System {
 
   private drawTerrain(): void {
     const verts = physicsSystem.getTerrain();
-    if (verts.length === 0) return;
-    this.ctxBg.strokeStyle =
+    if (verts.length < 2) return; // Need at least 2 points for a path
+
+    // Use fillStyle from CSS variable or constant
+    this.ctxBg.fillStyle =
       getComputedStyle(document.documentElement).getPropertyValue("--ground-color") || COLORS.ground;
-    this.ctxBg.lineWidth = 2;
+
     this.ctxBg.beginPath();
     this.ctxBg.moveTo(verts[0].x, verts[0].y);
     for (let i = 1; i < verts.length; i++) {
       this.ctxBg.lineTo(verts[i].x, verts[i].y);
     }
-    this.ctxBg.stroke();
+    // Close the path implicitly back to the start? Check if terrain generation includes bottom line.
+    // Assuming generateTerrain creates a closed polygon (top surface + vertical sides + bottom)
+    this.ctxBg.closePath();
+    this.ctxBg.fill();
   }
 
   private colorForKey(key: string): string {

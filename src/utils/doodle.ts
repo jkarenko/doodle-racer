@@ -16,18 +16,28 @@ interface AvatarParts {
 
 /** Convert strokes to an avatar composite. Falls back to cube if invalid. */
 export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
+  // Unique negative group prevents self-collision within this avatar instance.
+  const avatarGroup = -Matter.Common.nextId();
+
+  // Common collision filter for all avatar parts.
+  const avatarFilter = {
+    group: avatarGroup,
+    category: COLLISION.AVATAR,
+    mask: COLLISION.GROUND | COLLISION.BOUNDARY, // Collide only with ground/boundaries
+  };
+
   const composite = Matter.Composite.create({label: "avatar"});
 
   const bodyStroke = strokes.find((s) => s.color === "black");
   if (!bodyStroke || bodyStroke.pts.length < 3) {
     const cube = Matter.Bodies.rectangle(0, 0, 60, 60, {label: "body"});
-    Matter.Composite.addBody(composite, cube);
+    Matter.Composite.add(composite, cube);
     return {composite, main: cube, wheels: [], legs: []};
   }
 
   // Build body polygon using convex hull of stroke points
   const verts = bodyStroke.pts.map((p) => ({x: p.x, y: p.y}));
-  const hull = Matter.Vertices.hull(verts);
+  const hull = Matter.Vertices.hull(verts as Matter.Vertex[]);
   // Matter.Bodies.fromVertices can return an array (for concave shapes) or throw
   // if the vertex set is invalid. Guard against both cases so the game never
   // crashes on malformed user input.
@@ -35,10 +45,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
   const bodyOptions = {
     label: "body",
     friction: 0.8,
-    collisionFilter: {
-      category: COLLISION.DEFAULT,
-      mask: COLLISION.GROUND | COLLISION.DEFAULT, // Collide with ground and other default objects
-    },
+    collisionFilter: avatarFilter,
   };
   try {
     const centroid = Matter.Vertices.centre(hull);
@@ -52,10 +59,10 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
         // Matter.Composite.addBody(composite, b);
       }
       // Ensure the main 'body' reference IS added to the composite
-      Matter.Composite.addBody(composite, body);
+      Matter.Composite.add(composite, body);
     } else {
       body = result;
-      Matter.Composite.addBody(composite, body);
+      Matter.Composite.add(composite, body);
     }
   } catch (err) {
     // Fallback: simple rectangle around stroke bounds.
@@ -69,7 +76,7 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     const h = Math.max(40, maxY - minY);
     const centroid = {x: (minX + maxX) / 2, y: (minY + maxY) / 2}; // Approx centroid for fallback
     body = Matter.Bodies.rectangle(centroid.x, centroid.y, w, h, bodyOptions);
-    Matter.Composite.addBody(composite, body);
+    Matter.Composite.add(composite, body);
   }
 
   // Wheels (red strokes) – circle at centroid
@@ -86,12 +93,9 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     const wheel = Matter.Bodies.circle(cx, cy, r, {
       label: "wheel",
       friction: 0.8,
-      collisionFilter: {
-        category: COLLISION.DEFAULT,
-        mask: COLLISION.GROUND | COLLISION.DEFAULT,
-      },
+      collisionFilter: avatarFilter,
     });
-    Matter.Composite.addBody(composite, wheel);
+    Matter.Composite.add(composite, wheel);
     wheels.push(wheel);
     // Constraint
     const constraint = Matter.Constraint.create({
@@ -129,16 +133,17 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     // Create leg at its ABSOLUTE calculated midpoint
     const leg = Matter.Bodies.rectangle(cx, cy, length, thickness, {
       label: "leg",
-      friction: 0.8,
-      collisionFilter: {
-        category: COLLISION.DEFAULT,
-        mask: COLLISION.GROUND | COLLISION.DEFAULT,
-      },
+      friction: 0.9, // Increased grip
+      restitution: 0, // No bounce
+      collisionFilter: avatarFilter,
+      chamfer: {radius: 2}, // Beveled edges to reduce snagging
     });
     // Rotate to match stroke direction
     Matter.Body.setAngle(leg, Math.atan2(dy, dx));
 
-    Matter.Composite.addBody(composite, leg);
+    Matter.Composite.add(composite, leg);
+    // Set leg mass relative to main body mass to keep CoM stable
+    Matter.Body.setMass(leg, body.mass * 0.1);
     legs.push(leg);
 
     // Revolute joint at proximal end (p0)
@@ -152,6 +157,8 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
       stiffness: 0.05,
       damping: 0.05,
     });
+    // TODO: Investigate correct way to enable/control constraint motor if needed.
+    // Matter.Constraint.motorEnable(constraint); // This function does not exist.
     Matter.Composite.add(composite, constraint);
   }
 
