@@ -412,8 +412,19 @@ I'm ready to build! Switch to Agent mode and tell me to continue.
 - 🟢 Accessibility: ARIA labels, 44 px buttons, color-blind palette.
 
 ### Remaining for M2 polish
-- Performance profiling & micro-optimisations.
+- Ambient loop AudioSystem integration (M3)
 
-### Next Steps
-1. Run performance profiling pass and optimize if necessary.
-2. Prepare final M2 demo build and tag release.
+### Added (Implementation Progress)
+- 🩺 DebugOverlaySystem: real-time FPS + heap overlay for dev builds to aid profiling.
+
+### Next Steps (refreshed)
+1. Implement ambient AudioSystem with volume & toggle, persist in settings.
+2. InputSystem: pinch-to-pan and three-finger tap eraser shortcuts.
+3. Accessibility: mirror canvas overlays to aria-live DOM nodes, add keyboard shortcuts.
+4. Global error handling overlay & avatar polygon validation.
+5. Game balance: torque scaling & terrain difficulty tune.
+6. Update README (physics reference, audio changes, architecture diagram, quick start).
+7. Set up GitHub Actions CI: lint, tests, size-limit, Lighthouse.
+8. Draft CONTRIBUTING.md & commit guidelines.
+9. Begin PWA packaging (manifest, icons, Workbox).
+10. Release automation script for GitHub Pages deploy.
