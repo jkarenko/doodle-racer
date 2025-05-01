@@ -24,8 +24,11 @@ export class GameScene implements SceneModule {
   mount(root: HTMLElement, ctx: GameContext): void {
     this.ctx = ctx;
 
-    // Reset physics with current strokes (placeholder implementation)
+    // Create physics bodies from strokes
     physicsSystem.reset(inputSystem.getStrokes() as any);
+
+    // Clear the original strokes now that the physics bodies exist
+    inputSystem.clear();
 
     this.container = document.createElement("div");
     Object.assign(this.container.style, {
