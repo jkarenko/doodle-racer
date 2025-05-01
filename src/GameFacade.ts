@@ -26,6 +26,9 @@ export class GameFacade {
     const engine = Matter.Engine.create({enableSleeping: false});
     engine.gravity.y = 1; // Realistic gravity scale set later via constants
 
+    const hashSeed = window.location.hash.replace("#", "");
+    const seedNum = hashSeed ? parseInt(hashSeed, 16) >>> 0 : 0xdeadbeef;
+
     const defaultSettings: Settings = {
       music: true,
       sfx: true,
@@ -37,6 +40,7 @@ export class GameFacade {
       canvasFg,
       engine,
       world: engine.world,
+      seed: seedNum,
       settings: defaultSettings,
     } as never; // will patch with sceneManager later
 

@@ -5,6 +5,7 @@ export interface GameContext {
   readonly canvasFg: HTMLCanvasElement;
   readonly engine: Matter.Engine;
   readonly world: Matter.World;
+  seed: number;
   readonly sceneManager?: import("@/scenes/SceneManager").SceneManager;
   readonly settings: Settings;
 }

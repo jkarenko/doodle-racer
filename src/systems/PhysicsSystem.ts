@@ -33,7 +33,7 @@ export class PhysicsSystem implements System {
     Matter.World.clear(world, false);
 
     // Procedural terrain based on fixed seed for now (will use URL seed later)
-    this.terrainVerts = generateTerrain(0xdeadbeef);
+    this.terrainVerts = generateTerrain(this.ctx.seed);
     const ground = terrainToBody(this.terrainVerts);
     Matter.World.add(world, ground);
     this.bodies = [{body: ground, color: COLORS.ground}];

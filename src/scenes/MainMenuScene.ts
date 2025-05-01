@@ -38,6 +38,24 @@ export class MainMenuScene implements SceneModule {
     const newBtn = this.button("New Game", () => this.change(SceneId.NEW_GAME));
     this.container.appendChild(newBtn);
 
+    const seedInput = document.createElement("input");
+    seedInput.type = "text";
+    seedInput.placeholder = "Seed (hex)";
+    seedInput.maxLength = 10;
+    seedInput.style.textAlign = "center";
+    this.container.appendChild(seedInput);
+
+    const setSeedBtn = this.button("Set Seed", () => {
+      const val = seedInput.value.startsWith("0x") ? seedInput.value : `0x${seedInput.value}`;
+      if (/^0x[0-9a-fA-F]{1,8}$/.test(val)) {
+        window.location.hash = val;
+        window.location.reload();
+      } else {
+        alert("Invalid hex seed");
+      }
+    });
+    this.container.appendChild(setSeedBtn);
+
     root.appendChild(this.container);
   }
 
