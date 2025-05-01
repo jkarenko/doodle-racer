@@ -5,6 +5,7 @@ import type {GameContext, Settings} from "@/types/context";
 import {SceneManager} from "@/scenes/SceneManager";
 import {SceneId, type SceneModule} from "@/scenes/Scene";
 import {mainMenuScene} from "@/scenes/MainMenuScene";
+import {newGameScene} from "@/scenes/NewGameScene";
 
 /**
  * GameFacade
@@ -52,6 +53,7 @@ export class GameFacade {
     // Scene factory: supply lazily created scene modules (will be populated later)
     const factory: Record<SceneId, () => SceneModule> = {
       [SceneId.MAIN_MENU]: mainMenuScene,
+      [SceneId.NEW_GAME]: newGameScene,
     };
 
     const manager = new SceneManager(sceneRoot, this.ctx as any, factory);
