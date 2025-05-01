@@ -17,6 +17,7 @@ export class RenderSystem implements System {
   private dpr = window.devicePixelRatio || 1;
   private width = 0;
   private height = 0;
+  private cameraX = 0;
 
   init(ctx: GameContext): void {
     this.ctxFg = ctx.canvasFg.getContext("2d") as CanvasRenderingContext2D;
@@ -26,6 +27,13 @@ export class RenderSystem implements System {
   }
 
   update(): void {
+    // Camera follow avatar (smooth)
+    const avatar = physicsSystem.getRenderBodies().find((b) => b.body === (physicsSystem as any).avatar)?.body;
+    if (avatar) {
+      const target = Math.max(0, avatar.position.x - this.width * 0.33);
+      this.cameraX += (target - this.cameraX) * 0.1;
+    }
+
     this.clearBg();
     this.drawTerrain();
     this.clear();
@@ -45,15 +53,26 @@ export class RenderSystem implements System {
     canvas.height = this.height * this.dpr;
     canvas.style.width = `${this.width}px`;
     canvas.style.height = `${this.height}px`;
-    this.ctxFg.scale(this.dpr, this.dpr);
+
+    const canvasBg = ctx.canvasBg;
+    canvasBg.width = this.width * this.dpr;
+    canvasBg.height = this.height * this.dpr;
+    canvasBg.style.width = `${this.width}px`;
+    canvasBg.style.height = `${this.height}px`;
+
+    // Reset transforms
+    this.ctxFg.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.ctxBg.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
   private clear(): void {
-    this.ctxFg.clearRect(0, 0, this.width, this.height);
+    this.ctxFg.setTransform(this.dpr, 0, 0, this.dpr, -this.cameraX * this.dpr, 0);
+    this.ctxFg.clearRect(this.cameraX, 0, this.width, this.height);
   }
 
   private clearBg(): void {
-    this.ctxBg.clearRect(0, 0, this.width, this.height);
+    this.ctxBg.setTransform(this.dpr, 0, 0, this.dpr, -this.cameraX * this.dpr, 0);
+    this.ctxBg.clearRect(this.cameraX, 0, this.width, this.height);
   }
 
   private drawStrokes(): void {
