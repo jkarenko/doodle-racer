@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test -- --run --coverage
+
+      - name: Build
+        run: npm run build
+
+      - name: Check bundle size (gzip < 200kB)
+        run: |
+          size=$(find dist/assets -type f -name '*.js' -exec sh -c 'gzip -c "$1" | wc -c' _ {} \; | awk '{sum+=$1} END {print sum}')
+          echo "Gzipped size: ${size} bytes"
+          if [ "$size" -gt 204800 ]; then
+            echo "Bundle size exceeds 200 kB gzip limit!";
+            exit 1;
+          fi
