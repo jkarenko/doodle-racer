@@ -51,6 +51,7 @@ export class NewGameScene implements SceneModule {
     this.toolbar.appendChild(this.btn("Undo", () => inputSystem.undo()));
     this.toolbar.appendChild(this.btn("Redo", () => inputSystem.redo()));
     this.toolbar.appendChild(this.btn("Clear", () => inputSystem.clear()));
+    this.toolbar.appendChild(this.btn("Load", () => this.openLoadDialog()));
     this.toolbar.appendChild(
       this.btn("Done", async () => {
         const name = prompt("Name this doodle?", "My Doodle")?.trim();
@@ -89,6 +90,63 @@ export class NewGameScene implements SceneModule {
     btn.setAttribute("aria-label", `${key} stroke`);
     btn.addEventListener("click", () => inputSystem.setColor(key));
     this.toolbar.appendChild(btn);
+  }
+
+  private openLoadDialog(): void {
+    import("@/utils/persistence").then(({loadDoodles}) => {
+      const list = loadDoodles();
+      if (list.length === 0) {
+        alert("No saved doodles");
+        return;
+      }
+      const overlay = document.createElement("div");
+      Object.assign(overlay.style, {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        background: "rgba(0,0,0,0.6)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "auto",
+      });
+
+      const dialog = document.createElement("div");
+      Object.assign(dialog.style, {
+        background: "#fff",
+        padding: "1rem",
+        borderRadius: "8px",
+        maxHeight: "80vh",
+        overflowY: "auto",
+        minWidth: "240px",
+        fontFamily: "sans-serif",
+      });
+      list.forEach((d) => {
+        const item = document.createElement("button");
+        item.textContent = d.name;
+        Object.assign(item.style, {
+          display: "block",
+          width: "100%",
+          textAlign: "left",
+          padding: "0.25rem 0.5rem",
+          cursor: "pointer",
+        });
+        item.addEventListener("click", () => {
+          inputSystem.setStrokes(d.strokes as any);
+          overlay.remove();
+        });
+        dialog.appendChild(item);
+      });
+
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+
+      overlay.appendChild(dialog);
+      this.container.appendChild(overlay);
+    });
   }
 
   private btn(label: string, onClick: () => void): HTMLButtonElement {

@@ -46,6 +46,13 @@ export class InputSystem implements System {
     this.strokes = [];
   }
 
+  /** Replace current strokes with a new set (e.g., loading doodle). */
+  public setStrokes(strokes: Stroke[]): void {
+    this.pushUndo();
+    // Deep copy to prevent shared refs
+    this.strokes = strokes.map((s) => ({...s, pts: [...s.pts]}));
+  }
+
   /* ---------- System lifecycle ---------- */
   init(ctx: GameContext): void {
     this.ctx = ctx;
