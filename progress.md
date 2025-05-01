@@ -44,7 +44,7 @@ Questions / ambiguities to resolve
 5. CI/GitHub Actions — should we set up from day one or after initial prototype?  
 6. Art assets: will everything be procedurally drawn (no external images), or do we need any placeholder assets?  
 7. Target browsers: must we support Firefox at launch?  
-8. Any preference for state-management style (OOP classes vs functional modules) beyond “modular TypeScript”?
+8. Any preference for state-management style (OOP classes vs functional modules) beyond "modular TypeScript"?
 
 Next steps  
 • Await clarification on questions above.  
@@ -107,11 +107,11 @@ Current confidence: 75 %
 
 Questions to resolve  
 1. Menu/overlay look-and-feel: are plain DOM elements styled with CSS acceptable, or must we keep everything on canvas? (DOM recommended for a11y)  
-2. For physics we’ll author a minimal custom engine. Are we allowed to use tiny helper libs for vector math (e.g., gl-matrix) or must we write all ourselves to control bundle size?  
+2. For physics we'll author a minimal custom engine. Are we allowed to use tiny helper libs for vector math (e.g., gl-matrix) or must we write all ourselves to control bundle size?  
 3. Any preference for module format? (ES modules in Vite build assumed)  
 
 Next steps  
-• If answers are “DOM is fine” and “tiny math lib acceptable”, proceed.  
+• If answers are "DOM is fine" and "tiny math lib acceptable", proceed.  
 • Move to Phase 3 – Architecture Design: propose candidate patterns and select the optimal, outline core modules/interfaces, database schema (localStorage keys), and cross-cutting concerns.
 
 > 1. DOM
@@ -121,7 +121,7 @@ Next steps
 ### Phase 3 – Architecture Design
 
 1. Candidate architecture patterns  
-A. Modular “Subsystem-Facade” Pattern  
+A. Modular "Subsystem-Facade" Pattern  
    • GameFacade finite-state machine orchestrates discrete subsystems (Input, Physics, Render, UI, Persistence, Audio*).  
    • Each subsystem is a cohesive ES-module exposing an init(), update(dt), and dispose() contract.  
    • Clear, shallow dependency graph (only GameFacade imports subsystems).  
@@ -160,7 +160,7 @@ Rationale: meets all current requirements with lowest complexity and bundle size
 • PhysicsSystem (matter.js wrapper)  
   ‑ Converts finalized stroke data into rigid bodies (polygon body, circular wheels, capsule legs).  
   ‑ Manages world, integrates at 60 Hz; publishes avatar transform & ground mesh for rendering.  
-  ‑ Exposes helper for “isAvatarStuck” (≥4 s low velocity) and off-screen detection.
+  ‑ Exposes helper for "isAvatarStuck" (≥4 s low velocity) and off-screen detection.
 
 • RenderSystem  
   ‑ Two <canvas> layers (bg, fg).  
@@ -230,7 +230,7 @@ Key                    | Value
 Current understanding confidence: 85 %
 
 Questions / remaining ambiguities  
-1. Stroke-to-body conversion: wheels and legs are color-based; is the rule “first stroke per color becomes that part” or multiple wheels/legs allowed?  
+1. Stroke-to-body conversion: wheels and legs are color-based; is the rule "first stroke per color becomes that part" or multiple wheels/legs allowed?  
 2. Undo/redo: depth cap or unlimited until memory? (recommend configurable cap, e.g., 50 actions).  
 3. Victory/defeat overlays: render on DOM (simpler a11y) or inside Canvas (matches art style)?  
 
@@ -280,7 +280,7 @@ Pointer Events inconsistencies (Safari older versions) | Polyfill pointer-events
 Canvas overlay text readability on high-dpi | Use `ctx.scale(devicePixelRatio, devicePixelRatio)`; test on iPad/Pixel.  
 Stroke→rigid-body triangulation for complex polygons can fail | Restrict body stroke to <= 64 vertices; run ear- clipping fallback; warn user visually.  
 Undo/redo memory growth | Array pool reuse; cap 50; drop oldest snapshots.  
-LocalStorage quota exceeded | 20-doodle hard limit, plus LZ-string compression; surface “storage full” toast.  
+LocalStorage quota exceeded | 20-doodle hard limit, plus LZ-string compression; surface "storage full" toast.  
 Bundle drift over milestones | GitHub Action size-budget job (added post-M2).  
 
 4. Detailed Component Specifications  
@@ -390,6 +390,36 @@ Switching a scene disposes the previous module, mounts next.
 
 Current confidence: 92 %
 
-I’m ready to build! Switch to Agent mode and tell me to continue.
+I'm ready to build! Switch to Agent mode and tell me to continue.
 
 ## Implementation
+
+## Implementation Progress (Milestone M2)
+
+### Completed
+- 🚀 Project scaffolded with Vite + TypeScript, ESLint, Vitest.
+- 📚 Core utilities: logger, math `vec2`, seed PRNG, UID generator.
+- 🎨 Constants module with default & color-blind palettes; runtime theme switcher.
+- 🎬 Scene framework (SceneManager) and DOM-based scenes:
+  - Main Menu (seed entry, palette toggle)
+  - New Game (drawing UI, save / load, undo/redo, clear, color pick)
+  - Game Scene (physics, timer, camera scroll)
+  - Victory / Defeat overlays.
+- ✏️ InputSystem: stroke capture, 50-level undo/redo, setStrokes for loading.
+- ⚙️ PhysicsSystem: Matter.js world, procedural terrain from seed, stroke-to-avatar conversion (body + wheels), finish/fall detection.
+- 🖼️ RenderSystem: dual canvas, Hi-DPI scaling, dynamic camera, terrain & body rendering, CSS-var colors.
+- 💾 PersistenceSystem: compressed localStorage save/load (≤ 20 doodles).
+- 🟢 Accessibility: ARIA labels, 44 px buttons, color-blind palette.
+
+### Remaining for M2 polish
+- Leg stroke conversion (capsules + joints) and wheel motor torque.
+- Wheel spin visual accents.
+- Cloud background rendering for parallax.
+- Performance audit & bundle-size guard (CI).
+
+### Next Steps
+1. Implement legs & motor torque for locomotion.
+2. Add simple cloud generator in background layer.
+3. Set up GitHub Action for lint/test/size.
+
+*(Last updated: 2025-05-01 17:26)*
