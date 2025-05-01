@@ -6,11 +6,11 @@
  * M2 we start with a simple placeholder avatar and flat ground so that we can
  * test RenderSystem drawing and scene transitions.
  */
-import Matter, {Bodies} from "matter-js";
+import Matter from "matter-js";
 import type {System} from "@/systems/System";
 import type {GameContext} from "@/types/context";
 import type {RenderBody, Stroke} from "@/types/models";
-import {COLORS} from "@/constants";
+import {COLORS, PHYSICS} from "@/constants";
 import {generateTerrain, terrainToBody} from "@/utils/terrain";
 import type {Vec2} from "@/types/models";
 import {strokesToAvatar} from "@/utils/doodle";
@@ -20,6 +20,7 @@ export class PhysicsSystem implements System {
   private bodies: RenderBody[] = [];
   private avatar?: Matter.Body;
   private terrainVerts: Vec2[] = [];
+  private wheels: Matter.Body[] = [];
 
   init(ctx: GameContext): void {
     this.ctx = ctx;
@@ -40,7 +41,8 @@ export class PhysicsSystem implements System {
     this.bodies = [{body: ground, color: COLORS.ground}];
 
     // Convert strokes into avatar composite positioned near start
-    const {composite, main} = strokesToAvatar(strokes);
+    const {composite, main, wheels} = strokesToAvatar(strokes);
+    this.wheels = wheels;
     Matter.Composite.translate(composite, {x: 200, y: 200});
     Matter.World.addComposite(world, composite);
 
@@ -50,12 +52,17 @@ export class PhysicsSystem implements System {
     this.bodies.push({body: main, color: COLORS.body});
     composite.bodies.forEach((b) => {
       if (b === main) return;
-      this.bodies.push({body: b, color: b.label === "wheel" ? COLORS.wheel : COLORS.leg});
+      const color = b.label === "wheel" ? COLORS.wheel : COLORS.leg;
+      this.bodies.push({body: b, color});
     });
   }
 
   update(): void {
-    // No-op; Engine updated by GameFacade
+    // Apply motor torque on wheels to propel the avatar.
+    for (const w of this.wheels) {
+      // Simple constant torque each frame.
+      w.torque += w.mass * PHYSICS.gravity * PHYSICS.wheelTorqueFactor;
+    }
   }
 
   dispose(): void {

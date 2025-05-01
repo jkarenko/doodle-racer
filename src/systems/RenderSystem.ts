@@ -10,6 +10,8 @@ import type {GameContext} from "@/types/context";
 import {inputSystem} from "@/systems/InputSystem";
 import {COLORS} from "@/constants";
 import {physicsSystem} from "@/systems/PhysicsSystem";
+import {PRNG} from "@/utils/seed";
+import type {Vec2} from "@/types/models";
 
 export class RenderSystem implements System {
   private ctxFg!: CanvasRenderingContext2D;
@@ -18,11 +20,13 @@ export class RenderSystem implements System {
   private width = 0;
   private height = 0;
   private cameraX = 0;
+  private clouds: {pos: Vec2; radius: number}[] = [];
 
   init(ctx: GameContext): void {
     this.ctxFg = ctx.canvasFg.getContext("2d") as CanvasRenderingContext2D;
     this.ctxBg = ctx.canvasBg.getContext("2d") as CanvasRenderingContext2D;
     this.resize(ctx);
+    this.generateClouds(ctx.seed);
     window.addEventListener("resize", () => this.resize(ctx));
   }
 
@@ -35,6 +39,8 @@ export class RenderSystem implements System {
     }
 
     this.clearBg();
+    this.drawSky();
+    this.drawClouds();
     this.drawTerrain();
     this.clear();
     this.drawStrokes();
@@ -75,6 +81,26 @@ export class RenderSystem implements System {
     this.ctxBg.clearRect(this.cameraX, 0, this.width, this.height);
   }
 
+  private drawSky(): void {
+    const grad = this.ctxBg.createLinearGradient(0, 0, 0, this.height);
+    grad.addColorStop(0, COLORS.skyStart);
+    grad.addColorStop(1, COLORS.skyEnd);
+    this.ctxBg.fillStyle = grad;
+    this.ctxBg.fillRect(this.cameraX, 0, this.width, this.height);
+  }
+
+  private drawClouds(): void {
+    const parallax = 0.3;
+    this.ctxBg.fillStyle = "rgba(255,255,255,0.8)";
+    for (const c of this.clouds) {
+      const x = c.pos.x - this.cameraX * parallax;
+      const y = c.pos.y;
+      this.ctxBg.beginPath();
+      this.ctxBg.ellipse(x, y, c.radius, c.radius * 0.6, 0, 0, Math.PI * 2);
+      this.ctxBg.fill();
+    }
+  }
+
   private drawStrokes(): void {
     const strokes = inputSystem.getStrokes();
     for (const s of strokes) {
@@ -102,6 +128,18 @@ export class RenderSystem implements System {
         this.ctxFg.beginPath();
         this.ctxFg.arc(body.position.x, body.position.y, body.circleRadius, 0, Math.PI * 2);
         this.ctxFg.stroke();
+
+        if (body.label === "wheel") {
+          // Spin accent line
+          const angle = body.angle;
+          const r = body.circleRadius;
+          const endX = body.position.x + Math.cos(angle) * r;
+          const endY = body.position.y + Math.sin(angle) * r;
+          this.ctxFg.beginPath();
+          this.ctxFg.moveTo(body.position.x, body.position.y);
+          this.ctxFg.lineTo(endX, endY);
+          this.ctxFg.stroke();
+        }
       } else {
         const verts = body.vertices;
         this.ctxFg.beginPath();
@@ -137,6 +175,20 @@ export class RenderSystem implements System {
         return getComputedStyle(document.documentElement).getPropertyValue("--leg-color") || COLORS.leg;
       default:
         return getComputedStyle(document.documentElement).getPropertyValue("--body-color") || COLORS.body;
+    }
+  }
+
+  private generateClouds(seed: number): void {
+    const prng = new PRNG(seed ^ 0xabc123);
+    const cloudCount = 12;
+    const maxX = 2000; // matches terrain length
+    const maxY = this.height * 0.4;
+    this.clouds = [];
+    for (let i = 0; i < cloudCount; i++) {
+      this.clouds.push({
+        pos: {x: prng.next() * maxX, y: prng.next() * maxY},
+        radius: 30 + prng.next() * 40,
+      });
     }
   }
 }

@@ -406,20 +406,14 @@ I'm ready to build! Switch to Agent mode and tell me to continue.
   - Game Scene (physics, timer, camera scroll)
   - Victory / Defeat overlays.
 - ✏️ InputSystem: stroke capture, 50-level undo/redo, setStrokes for loading.
-- ⚙️ PhysicsSystem: Matter.js world, procedural terrain from seed, stroke-to-avatar conversion (body + wheels), finish/fall detection.
-- 🖼️ RenderSystem: dual canvas, Hi-DPI scaling, dynamic camera, terrain & body rendering, CSS-var colors.
+- ⚙️ PhysicsSystem: Matter.js world, procedural terrain from seed, stroke-to-avatar conversion (body + wheels + legs), finish/fall detection, wheel motor torque.
+- 🖼️ RenderSystem: dual canvas, Hi-DPI scaling, dynamic camera, terrain & body rendering, wheel spin accent, sky gradient & parallax clouds.
 - 💾 PersistenceSystem: compressed localStorage save/load (≤ 20 doodles).
 - 🟢 Accessibility: ARIA labels, 44 px buttons, color-blind palette.
 
 ### Remaining for M2 polish
-- Leg stroke conversion (capsules + joints) and wheel motor torque.
-- Wheel spin visual accents.
-- Cloud background rendering for parallax.
 - Performance audit & bundle-size guard (CI).
 
 ### Next Steps
-1. Implement legs & motor torque for locomotion.
-2. Add simple cloud generator in background layer.
-3. Set up GitHub Action for lint/test/size.
-
-*(Last updated: 2025-05-01 17:26)*
+1. Set up GitHub Action workflow for `lint`, `test`, and bundle-size budget (< 200 kB gzip).
+2. Run performance profiling pass and optimize if necessary.
