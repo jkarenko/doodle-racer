@@ -3,7 +3,8 @@ import {log} from "@/utils/logger";
 import type {System} from "@/systems/System";
 import type {GameContext, Settings} from "@/types/context";
 import {SceneManager} from "@/scenes/SceneManager";
-import {SceneId} from "@/scenes/Scene";
+import {SceneId, type SceneModule} from "@/scenes/Scene";
+import {mainMenuScene} from "@/scenes/MainMenuScene";
 
 /**
  * GameFacade
@@ -49,10 +50,15 @@ export class GameFacade {
     canvasFg.after(sceneRoot);
 
     // Scene factory: supply lazily created scene modules (will be populated later)
-    const factory = {} as Record<SceneId, () => any>;
+    const factory: Record<SceneId, () => SceneModule> = {
+      [SceneId.MAIN_MENU]: mainMenuScene,
+    };
 
     const manager = new SceneManager(sceneRoot, this.ctx as any, factory);
     (this.ctx as any).sceneManager = manager;
+
+    // Start with main menu scene
+    manager.change(SceneId.MAIN_MENU);
   }
 
   /** Register a subsystem for lifecycle management. Must be called before start(). */
