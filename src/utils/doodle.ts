@@ -96,34 +96,71 @@ export function strokesToAvatar(strokes: Stroke[]): AvatarParts {
     Matter.Composite.add(composite, body);
   }
 
-  // Wheels (red strokes) – circle at centroid
+  // Wheels (red strokes) – Use convex hull for physics shape
   const wheels: Matter.Body[] = [];
   const validWheelStrokes: Stroke[] = []; // Store corresponding valid strokes
   for (const ws of wheelStrokes) {
     if (ws.pts.length < 3) continue;
-    const cx = ws.pts.reduce((sum, p) => sum + p.x, 0) / ws.pts.length;
-    const cy = ws.pts.reduce((sum, p) => sum + p.y, 0) / ws.pts.length;
-    // radius approximate as max distance
-    const r = Math.max(...ws.pts.map((p) => Math.hypot(p.x - cx, p.y - cy)));
-    if (r < 5) continue;
-    // Create wheel at its ABSOLUTE calculated position
-    const wheel = Matter.Bodies.circle(cx, cy, r, {
+
+    // Calculate original stroke centroid for constraint positioning
+    const strokeCentroidX = ws.pts.reduce((sum, p) => sum + p.x, 0) / ws.pts.length;
+    const strokeCentroidY = ws.pts.reduce((sum, p) => sum + p.y, 0) / ws.pts.length;
+
+    // Create physics body from convex hull of the stroke
+    const verts = ws.pts.map((p) => ({x: p.x, y: p.y}));
+    const hull = Matter.Vertices.hull(verts as Matter.Vertex[]);
+
+    // Check if hull is valid (at least 3 vertices)
+    if (hull.length < 3) continue;
+
+    let wheel: Matter.Body;
+    const wheelOptions = {
       label: "wheel",
-      friction: 0.8,
+      friction: 0.8, // Keep wheel friction
       collisionFilter: avatarFilter,
-      // Keep wheels visible by default
-      render: {visible: false}, // Make wheels invisible
-    });
-    Matter.Composite.add(composite, wheel);
+      render: {visible: false}, // Keep invisible
+    };
+
+    try {
+      const hullCentroid = Matter.Vertices.centre(hull);
+      // Create body from vertices - use hull centroid as origin
+      const result = Matter.Bodies.fromVertices(hullCentroid.x, hullCentroid.y, [hull], wheelOptions);
+
+      if (Array.isArray(result)) {
+        // Should generally not happen for a single convex hull, but handle defensively
+        wheel = result[0];
+        for (const b of result) {
+          // Matter.Composite.addBody(composite, b);
+          Matter.Composite.add(composite, b);
+        }
+        // Ensure the main reference is added if it wasn't already the first part
+        if (!composite.bodies.includes(wheel)) {
+          // Matter.Composite.addBody(composite, wheel);
+          Matter.Composite.add(composite, wheel);
+        }
+      } else {
+        wheel = result;
+        // Matter.Composite.addBody(composite, wheel);
+        Matter.Composite.add(composite, wheel);
+      }
+    } catch (err) {
+      console.error("Failed to create wheel body from vertices:", err);
+      continue; // Skip this wheel if creation fails
+    }
+
+    // Check if the wheel body was successfully created
+    if (!wheel) continue;
+
     wheels.push(wheel);
     validWheelStrokes.push(ws); // Add the corresponding stroke
-    // Constraint
+
+    // Constraint: Attach main body (at stroke centroid location) to wheel body (at its hull centroid)
     const constraint = Matter.Constraint.create({
-      bodyA: body,
-      // Point A is the wheel's center relative to the body's center
-      pointA: {x: cx - body.position.x, y: cy - body.position.y},
-      bodyB: wheel,
-      pointB: {x: 0, y: 0},
+      bodyA: body, // Main avatar body
+      // Point A is the *original stroke's centroid* relative to the main body's center
+      pointA: {x: strokeCentroidX - body.position.x, y: strokeCentroidY - body.position.y},
+      bodyB: wheel, // The new hull-based wheel body
+      pointB: {x: 0, y: 0}, // Attach to the center (centroid) of the wheel body
       length: 0,
       stiffness: 0.05,
       damping: 0.05,
