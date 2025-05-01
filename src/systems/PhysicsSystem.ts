@@ -44,14 +44,12 @@ export class PhysicsSystem implements System {
     const {composite, main, wheels} = strokesToAvatar(strokes);
     this.wheels = wheels;
     // Spawn slightly above the starting terrain height (terrainVerts[0].y)
-    // Calculate approximate height of the avatar to avoid initial overlap
-    const bounds = Matter.Composite.bounds(composite);
-    const avatarHeight = bounds.max.y - bounds.min.y;
     const startX = 150; // A bit away from the left edge
-    const startY = this.terrainVerts[0].y - avatarHeight / 2 - 20; // Spawn 20px above ground
-    console.log("[PhysicsSystem] Before translate:", {composite, mainPos: main.position});
+    // Estimate starting Y based on main body position relative to the first terrain point
+    const startY = this.terrainVerts[0].y - (main.bounds.max.y - main.position.y) - 20; // Spawn 20px above ground
+    console.log("[PhysicsSystem] Before translate:", {mainPos: main.position, startY: startY});
     Matter.Composite.translate(composite, {x: startX - main.position.x, y: startY - main.position.y});
-    console.log("[PhysicsSystem] After translate:", {composite, mainPos: main.position});
+    console.log("[PhysicsSystem] After translate:", {mainPos: main.position});
     Matter.World.addComposite(world, composite);
 
     this.avatar = main;
@@ -60,7 +58,7 @@ export class PhysicsSystem implements System {
     // Clear previous bodies (except ground added earlier)
     this.bodies = this.bodies.filter((rb) => rb.body.label === "ground");
     Matter.Composite.allBodies(composite).forEach((b) => {
-      let color = COLORS.body; // Default to body color
+      let color: string = COLORS.body; // Explicitly type color as string
       if (b.label === "wheel") {
         color = COLORS.wheel;
       } else if (b.label === "leg") {
@@ -110,6 +108,11 @@ export class PhysicsSystem implements System {
 
   public getTerrain(): readonly Vec2[] {
     return this.terrainVerts;
+  }
+
+  /** Clears the reference to the current avatar body. */
+  public clearAvatar(): void {
+    this.avatar = undefined;
   }
 }
 

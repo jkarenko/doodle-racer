@@ -11,6 +11,8 @@ import type {GameContext} from "@/types/context";
 import {physicsSystem} from "@/systems/PhysicsSystem";
 import {inputSystem} from "@/systems/InputSystem";
 import {GAME} from "@/constants";
+import {renderSystem} from "@/systems/RenderSystem";
+import Matter from "matter-js";
 
 export class GameScene implements SceneModule {
   private container!: HTMLDivElement;
@@ -85,7 +87,28 @@ export class GameScene implements SceneModule {
   };
 
   private finish(victory: boolean): void {
+    // Stop camera follow immediately
+    physicsSystem.clearAvatar();
+
+    // Change to victory/defeat scene
     this.ctx.sceneManager?.change(victory ? SceneId.VICTORY : SceneId.DEFEAT);
+
+    // After a delay, remove the physics bodies and reset camera view
+    setTimeout(() => {
+      // Despawn player object by removing its bodies from the physics world
+      const bodiesToRemove = physicsSystem
+        .getRenderBodies()
+        .map((rb) => rb.body)
+        .filter((body) => body.label !== "ground"); // Don't remove the ground
+
+      if (bodiesToRemove.length > 0 && this.ctx.world) {
+        // Added check for this.ctx.world
+        Matter.World.remove(this.ctx.world, bodiesToRemove);
+      }
+
+      // Reset camera view to start position
+      renderSystem.resetCamera();
+    }, 2000);
   }
 }
 

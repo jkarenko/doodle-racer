@@ -48,6 +48,11 @@ export class RenderSystem implements System {
     this.drawBodies();
   }
 
+  /** Resets the camera's horizontal position to the start. */
+  public resetCamera(): void {
+    this.cameraX = 0;
+  }
+
   dispose(): void {
     // TODO remove listeners
   }
