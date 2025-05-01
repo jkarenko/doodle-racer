@@ -2,7 +2,8 @@ import Matter from "matter-js";
 import {log} from "@/utils/logger";
 import type {System} from "@/systems/System";
 import type {GameContext, Settings} from "@/types/context";
-import {GAME} from "@/constants";
+import {SceneManager} from "@/scenes/SceneManager";
+import {SceneId} from "@/scenes/Scene";
 
 /**
  * GameFacade
@@ -33,7 +34,25 @@ export class GameFacade {
       engine,
       world: engine.world,
       settings: defaultSettings,
-    };
+    } as never; // will patch with sceneManager later
+
+    // Create scene root div overlaying canvases
+    const sceneRoot = document.createElement("div");
+    Object.assign(sceneRoot.style, {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      pointerEvents: "none", // scenes enable as needed
+    });
+    canvasFg.after(sceneRoot);
+
+    // Scene factory: supply lazily created scene modules (will be populated later)
+    const factory = {} as Record<SceneId, () => any>;
+
+    const manager = new SceneManager(sceneRoot, this.ctx as any, factory);
+    (this.ctx as any).sceneManager = manager;
   }
 
   /** Register a subsystem for lifecycle management. Must be called before start(). */
